@@ -38,6 +38,8 @@ app.get('/testdb', function(req, res) {
     });
 });
 
+
+/** endpoint to read a specific order from Unified Orders table */
 app.get('/getSingleOrder/:orderID', function (req, res) {
   const orderID = req.params.orderID;
   pool.query('SELECT * FROM UnifiedOrders WHERE Order_ID = ?', [orderID], function (error, results) {
@@ -49,6 +51,7 @@ app.get('/getSingleOrder/:orderID', function (req, res) {
   });
 });
 
+/** endpoint to add orders in bulk to Unified Orders table */
 app.post('/addOrders', function (req, res) {
   var ordersArr = req.body;
 
@@ -98,6 +101,7 @@ app.post('/addOrders', function (req, res) {
   });
 });
 
+/** endpoint to add items in bulk to Unified Items table */
 app.post('/addItems', function (req, res) {
   var itemsArr = req.body;
 
@@ -138,7 +142,7 @@ app.post('/addItems', function (req, res) {
   });
 });
 
-//Endpoint to fetch single order
+/** endpoint to fetch single item from Unified Items */
 app.get('/getSingleItem/:orderID', function (req, res) {
   const orderID = req.params.orderID;
   pool.query('SELECT * FROM UnifiedItems WHERE Order_ID = ?', [orderID], function (error, results) {
@@ -150,7 +154,7 @@ app.get('/getSingleItem/:orderID', function (req, res) {
   });
 });
 
-
+/** endpoint to fetch all items from Unified Items */
 app.get('/items', function (req, res) {
   pool.query('SELECT * FROM UnifiedItems', function (error, results) {
     if (error) {
@@ -162,7 +166,7 @@ app.get('/items', function (req, res) {
   });
 });
 
-
+/** endpoint to fetch Order ID and Order date from Unified Orders table */
 app.get('/ordersByDate',function(req,res){
   pool.query('Select Order_ID,Order_Date from UnifiedOrders ORDER BY Order_Date DESC',function(error,results){
     if(error){
@@ -173,7 +177,7 @@ app.get('/ordersByDate',function(req,res){
   });
 })
 
-
+/** endpoint to update an order in Unified Orders table using Order ID */
 app.post('/updateOrders', function (req, res) {
   // Get the data from the request body
   const data = req.body;
@@ -195,8 +199,7 @@ app.post('/updateOrders', function (req, res) {
   });
 });
 
-
-// Endpoint to unshipped orders
+/** endpoint to get unshipped orders from Unified Orders table */
 app.get('/getUnshippedOrders', function (req, res) {
   pool.query('SELECT * FROM UnifiedOrders WHERE Source_Shipped_Status = "Unshipped"', function (error, results) {
     if (error) {
@@ -208,7 +211,7 @@ app.get('/getUnshippedOrders', function (req, res) {
   });
 });
 
-// Endpoint to unshipped items
+/** endpoint to get unshipped items from Unified Items table */
 app.get('/getUnshippedItems', function (req, res) {
   pool.query('SELECT * FROM UnifiedItems WHERE Source_Shipped_Status = "Unshipped"', function (error, results) {
     if (error) {
@@ -220,6 +223,7 @@ app.get('/getUnshippedItems', function (req, res) {
   });
 });
 
+/** endpoint to update an item in Unified Orders table using Order ID */
 app.post('/updateItems', function (req, res) {
   // Get the data from the request body
   const data = req.body;
@@ -241,6 +245,7 @@ app.post('/updateItems', function (req, res) {
   });
 });
 
+/** endpoint to update multiple orders in Unified Orders table using Order ID */
 app.post('/updateAllOrders', function (req, res) {
   const data = req.body;
 
@@ -294,6 +299,7 @@ app.post('/updateAllOrders', function (req, res) {
   });
 });
 
+/** endpoint to add orders to Satin Orders table */
 app.post('/addSatinOrders', function (req, res) {
   const ordersArr = req.body;
 
@@ -481,6 +487,38 @@ app.get('/readSatinByTypes', function (req, res) {
 app.delete('/deleteSingleSatinOrder/:orderID', function (req, res) {
   const orderID = req.params.orderID;
   pool.query('DELETE FROM SatinOrders WHERE orderNumber = ?', [orderID], function (error, results) {
+    if (error) {
+      res.status(500).send("Error deleting order: " + error);
+    } else {
+      // Check if any rows were affected (i.e., if the order was actually deleted)
+      if (results.affectedRows > 0) {
+        res.status(204).send("Order deleted: "+orderID);
+      } else {
+        res.status(404).send("Order not found: " + orderID);
+      }
+    }
+  });
+});
+
+app.delete('/deleteUnifiedOrder/:orderID', function (req, res) {
+  const orderID = req.params.orderID;
+  pool.query('DELETE FROM UnifiedOrders WHERE Order_ID = ?', [orderID], function (error, results) {
+    if (error) {
+      res.status(500).send("Error deleting order: " + error);
+    } else {
+      // Check if any rows were affected (i.e., if the order was actually deleted)
+      if (results.affectedRows > 0) {
+        res.status(204).send("Order deleted: "+orderID);
+      } else {
+        res.status(404).send("Order not found: " + orderID);
+      }
+    }
+  });
+});
+
+app.delete('/deleteUnifiedItem/:orderID', function (req, res) {
+  const orderID = req.params.orderID;
+  pool.query('DELETE FROM UnifiedItems WHERE Order_ID = ?', [orderID], function (error, results) {
     if (error) {
       res.status(500).send("Error deleting order: " + error);
     } else {
