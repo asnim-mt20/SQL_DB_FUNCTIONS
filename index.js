@@ -51,6 +51,7 @@ app.get('/getSingleOrder/:orderID', function (req, res) {
   });
 });
 
+
 /** endpoint to add orders in bulk to Unified Orders table */
 app.post('/addOrders', function (req, res) {
   var ordersArr = req.body;
@@ -524,13 +525,27 @@ app.delete('/deleteUnifiedItem/:orderID', function (req, res) {
     } else {
       // Check if any rows were affected (i.e., if the order was actually deleted)
       if (results.affectedRows > 0) {
-        res.status(204).send("Order deleted: "+orderID);
+        res.status(204).send("Order deleted: "+ orderID);
       } else {
         res.status(404).send("Order not found: " + orderID);
       }
     }
   });
 });
+
+app.post('/alterTable/:column', function (req, res) {
+  const columnName = req.params.column;
+  const query = `ALTER TABLE UnifiedItems ADD ${columnName} VARCHAR(255);`;
+
+  pool.query(query, function (error, results) {
+    if (error) {
+      res.status(500).send("Error altering table: " + error);
+    } else {
+      res.status(200).send("Table altered, column added: " + columnName);
+    }
+  });
+});
+
 
 
 const PORT = 3000;
