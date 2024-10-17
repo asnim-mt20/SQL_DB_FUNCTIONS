@@ -115,7 +115,7 @@ app.post('/addItems', function (req, res) {
     Item_Variation_name6,Item_Variation_value6,Item_Variation_name7,Item_Variation_value7,
     Item_Variation_name8,Item_Variation_value8,Qr_Code,Source_Status,Source_Shipped_Date,
     Ops_Shipped_Status,Ops_Shipped_Date,Item_Price,Order_Total,Shipping_Company,Shipping_ID,
-    Item_Min_Days,Item_Max_Days,ReportFlag
+    Item_Min_Days,Item_Max_Days,ReportFlag,ItemPrice_Avg,ConversionRate,ItemPrice_INR
   ) 
   VALUES ?`;
 
@@ -128,7 +128,7 @@ app.post('/addItems', function (req, res) {
     item.Item_Variation_name6,item.Item_Variation_value6,item.Item_Variation_name7,item.Item_Variation_value7,
     item.Item_Variation_name8,item.Item_Variation_value8,item.Qr_Code,item.Source_Status,item.Source_Shipped_Date,
     item.Ops_Shipped_Status,item.Ops_Shipped_Date,item.Item_Price,item.Order_Total,item.Shipping_Company,item.Shipping_ID,
-    item.Item_Min_Days,item.Item_Max_Days,"0"
+    item.Item_Min_Days,item.Item_Max_Days,"0",item.ItemPrice_Avg,item.ConversionRate,item.ItemPrice_INR
   ]);
 
   // Execute the SQL insert query
@@ -545,7 +545,6 @@ app.post('/alterTable/:column', function (req, res) {
     }
   });
 });
-
 
 
 const PORT = 3000;
