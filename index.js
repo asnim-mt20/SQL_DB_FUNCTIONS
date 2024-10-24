@@ -300,6 +300,86 @@ app.post('/updateAllOrders', function (req, res) {
   });
 });
 
+/** endpoint to update multiple items in Unified Items table using Order ID */
+app.post('/updateAllItems', function (req, res) {
+  const data = req.body;
+
+  const failedOrders = [];
+
+  let updatedItemsCount = 0;
+
+  data.forEach(order => {
+    const orderId = order.Order_ID;
+
+    const columnsToUpdate = Object.keys(order);
+    const updateQuery = `UPDATE UnifiedItems SET ${columnsToUpdate.map(column => `${column} = ?`).join(', ')} WHERE Order_ID = ?`;
+
+    const updateValues = [...Object.values(order), orderId];
+
+    console.log(updateQuery);
+
+    pool.query(updateQuery, updateValues, function (error, results) {
+      if (error) {
+        console.error(`Error updating order ${orderId}:`, error);
+        failedOrders.push(orderId);
+      } else {
+        if (results.affectedRows > 0) {
+          updatedItemsCount += results.affectedRows;
+          console.log(`Order ${orderId} updated successfully`);
+        } else {
+          console.log(`Order ${orderId} does not exist in the database`);
+          failedOrders.push(orderId);
+        }
+      }
+
+      console.log("updated orders count "+updatedItemsCount)
+	  if (updatedItemsCount + failedOrders.length === data.length) {
+        if (updatedItemsCount > 0) {
+          let responseMessage = `Updated ${updatedItemsCount} orders successfully. `;
+          if (failedOrders.length > 0) {
+            responseMessage += `Failed to update orders: ${failedOrders.join(', ')}`;
+          }
+	 res.json({
+            status: "success",
+            failedOrders: failedOrders
+          })
+        } else {
+          res.json({
+            status: "failed",
+            failedOrders: failedOrders
+          })
+        }
+      }
+    });
+  });
+});
+
+/** endpoint get an order from Unified Orders table using Customer Name*/
+app.get('/getOrderByName/:customerName', function (req, res) {
+  const c_name = req.params.customerName;
+  pool.query('SELECT * FROM UnifiedOrders WHERE Customer_Name = ?', [c_name], function (error, results) {
+    if (error) {
+      res.status(500).send("Error fetching order: " + error);
+    } else {
+      res.send(results);
+    }
+  });
+});
+
+/** endpoint get an order from Unified Orders table using Customer Name*/
+app.get('/getItemsByName/:orderID', function (req, res) {
+  const c_name = req.params.customerName;
+  pool.query('SELECT * FROM UnifiedItems WHERE Customer_Name = ?', [c_name], function (error, results) {
+    if (error) {
+      res.status(500).send("Error fetching order: " + error);
+    } else {
+      res.send(results);
+    }
+  });
+});
+
+
+
 /** endpoint to add orders to Satin Orders table */
 app.post('/addSatinOrders', function (req, res) {
   const ordersArr = req.body;
