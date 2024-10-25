@@ -367,7 +367,7 @@ app.get('/getOrderByName/:customerName', function (req, res) {
 });
 
 /** endpoint get an order from Unified Orders table using Customer Name*/
-app.get('/getItemsByName/:orderID', function (req, res) {
+app.get('/getItemsByName/:customerName', function (req, res) {
   const c_name = req.params.customerName;
   pool.query('SELECT * FROM UnifiedItems WHERE Customer_Name = ?', [c_name], function (error, results) {
     if (error) {
