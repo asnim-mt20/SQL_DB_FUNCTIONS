@@ -212,11 +212,11 @@ pool.query(checkQuery, [newOrderNumbers], function (error, results) {
     // Execute the SQL insert query
     pool.query(insertQuery, [values], function (error, results) {
       if (error) {
-        console.error('Error inserting satin orders:', error);
+        console.error('Error inserting form orders:', error);
         return res.status(500).send('Error inserting form orders');
       } else {
         console.log('Forms Orders inserted successfully');
-        return res.status(200).send('Satin Orders inserted successfully');
+        return res.status(200).send('Forms Orders inserted successfully');
       }
     });
   });
@@ -225,7 +225,7 @@ pool.query(checkQuery, [newOrderNumbers], function (error, results) {
 /** endpoint to fetch single item from Unified Items */
 app.get('/getFormOrder/:orderID', function (req, res) {
   const orderID = req.params.orderID;
-  pool.query('SELECT * FROM UnifiedForms WHERE Order_ID = ?', [orderID], function (error, results) {
+  pool.query('SELECT * FROM UnifiedForms WHERE Order_Number = ?', [orderID], function (error, results) {
     if (error) {
       res.status(500).send("Error fetching item: " + error);
     } else {
