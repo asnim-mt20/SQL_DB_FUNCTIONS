@@ -143,6 +143,98 @@ app.post('/addItems', function (req, res) {
   });
 });
 
+/** endpoint to add orders in bulk to Unified Forms table */
+app.post('/addFormOrders', function (req, res) {
+  const ordersArr = req.body;
+
+  // Validate input data
+  if (!Array.isArray(ordersArr) || ordersArr.length === 0) {
+    return res.status(400).send('Invalid input data');
+  }
+
+const newOrderNumbers = ordersArr.map(order => order.Order_Number);
+
+const checkQuery = 'SELECT Order_Number FROM UnifiedForms WHERE Order_Number IN (?)';
+
+pool.query(checkQuery, [newOrderNumbers], function (error, results) {
+    if (error) {
+      console.error('Error checking existing order numbers:', error);
+      return res.status(500).send('Error checking existing order numbers');
+    }
+
+    // Extract existing order numbers from the results
+    const existingOrderNumbers = results.map(row => row.Order_Number);
+
+    // Filter out orders with existing order numbers
+    const ordersToInsert = ordersArr.filter(order => !existingOrderNumbers.includes(order.Order_Number.toString()));
+    // console.log('Orders to insert:', ordersToInsert);
+
+    // If there are no orders to insert, return a message
+    if (ordersToInsert.length === 0) {
+      return res.status(200).send('No new orders to insert');
+    }
+
+    // Construct the insert query
+    const insertQuery = `
+    INSERT INTO UnifiedForms (
+    Type,Order_Number,Order_Date,Email_Address,Wedding_Date,NeedBy_Date,Wedding_Colors,Adult_Outfits,Any_Child_Outfits,Child_Outfits,
+    Fabric_Selected,Sizing_Country,Adult_1,Adult_2,Adult_3,Adult_4,Adult_5,
+    Adult_6,Adult_7,Adult_8,Adult_9,Adult_10,Adult_11,Adult_12,Adult_13,Adult_14,
+    Adult_15,Adult_16,Adult_17,Adult_18,Adult_19,Adult_20,Adult_21,Adult_22,Adult_23,
+    Adult_24,Adult_25,Child_1,Child_2,Child_3,Child_4,Child_5,Free_Belt_Loops,Add_on,
+    Heart_Shaped_Cut_Name,Heart_Shaped_Cut_Price,Heart_Shaped_Cut_Quantity,Selected_Packaging,
+    Add_Robes_Flag,Discounted_Cost_Robes_Name,Discounted_Cost_Robes_Price,Discounted_Cost_Robes_Quantity,
+    Total,Offer_Emails,CreatedBy_UserID,Entry_Id,Entry_Date,Source_Url,Transaction_Id,Payment_Amount,
+    Payment_Date,Payment_Status,Post_Id,User_Agent,User_IP,Reviewed_Status,Shipped_Status
+    ) 
+    VALUES ?`;
+
+    // Map orders array to values array
+    const values = ordersToInsert.map(form => {
+
+      // Ensure JSON objects are stringified
+      // const items = JSON.stringify(order.items || {});
+      // const reviewedItems = JSON.stringify(order.reviewedItems || {});
+
+      return [
+        form.Type,form.Order_Number,form.Order_Date,form.Email_Address,form.Wedding_Date,form.NeedBy_Date,form.Wedding_Colors,form.Adult_Outfits,form.Any_Child_Outfits,
+        form.Child_Outfits,form.Fabric_Selected,form.Sizing_Country,form.Adult_1,form.Adult_2,form.Adult_3,form.Adult_4,form.Adult_5,
+        form.Adult_6,form.Adult_7,form.Adult_8,form.Adult_9,form.Adult_10,form.Adult_11,form.Adult_12,form.Adult_13,form.Adult_14,
+        form.Adult_15,form.Adult_16,form.Adult_17,form.Adult_18,form.Adult_19,form.Adult_20,form.Adult_21,form.Adult_22,form.Adult_23,
+        form.Adult_24,form.Adult_25,form.Child_1,form.Child_2,form.Child_3,form.Child_4,form.Child_5,form.Free_Belt_Loops,form.Add_on,
+        form.Heart_Shaped_Cut_Name,form.Heart_Shaped_Cut_Price,form.Heart_Shaped_Cut_Quantity,form.Selected_Packaging,
+        form.Add_Robes_Flag,form.Discounted_Cost_Robes_Name,form.Discounted_Cost_Robes_Price,form.Discounted_Cost_Robes_Quantity,
+        form.Total,form.Offer_Emails,form.CreatedBy_UserID,form.Entry_Id,form.Entry_Date,form.Source_Url,form.Transaction_Id,form.Payment_Amount,
+        form.Payment_Date,form.Payment_Status,form.Post_Id,form.User_Agent,form.User_IP,form.Reviewed_Status,form.Shipped_Status
+      ];
+    });
+
+    // Execute the SQL insert query
+    pool.query(insertQuery, [values], function (error, results) {
+      if (error) {
+        console.error('Error inserting satin orders:', error);
+        return res.status(500).send('Error inserting form orders');
+      } else {
+        console.log('Forms Orders inserted successfully');
+        return res.status(200).send('Satin Orders inserted successfully');
+      }
+    });
+  });
+});
+
+/** endpoint to fetch single item from Unified Items */
+app.get('/getFormOrder/:orderID', function (req, res) {
+  const orderID = req.params.orderID;
+  pool.query('SELECT * FROM UnifiedForms WHERE Order_ID = ?', [orderID], function (error, results) {
+    if (error) {
+      res.status(500).send("Error fetching item: " + error);
+    } else {
+      res.send(results);
+    }
+  });
+});
+
+
 /** endpoint to fetch single item from Unified Items */
 app.get('/getSingleItem/:orderID', function (req, res) {
   const orderID = req.params.orderID;
