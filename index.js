@@ -222,11 +222,11 @@ app.get('/getFormOrderByType/:type', function(req, res){
 app.post('/updateFormOrders', function (req, res) {
   const data = req.body;
 
-  if (!data.Order_ID || !data.Type) {
-    return res.status(400).send('Order_ID and Type are required');
+  if (!data.Order_Number || !data.Type) {
+    return res.status(400).send('Order Number and Type are required');
   }
 
-  const { Order_ID, Type, ...updateFields } = data;
+  const { Order_Number, Type, ...updateFields } = data;
 
   if (Object.keys(updateFields).length === 0) {
     return res.status(400).send('No fields provided for update');
@@ -235,9 +235,9 @@ app.post('/updateFormOrders', function (req, res) {
   const updateQuery = `
     UPDATE UnifiedForms 
     SET ${Object.keys(updateFields).map(column => `${column} = ?`).join(', ')} 
-    WHERE Order_ID = ? AND Type = ?`;
+    WHERE Order_Number = ? AND Type = ?`;
   
-  const updateValues = [...Object.values(updateFields), Order_ID, Type];
+  const updateValues = [...Object.values(updateFields), Order_Number, Type];
 
   console.log(updateQuery);
 
