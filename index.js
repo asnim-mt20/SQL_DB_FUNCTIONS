@@ -194,7 +194,7 @@ app.post('/addFormOrders', function (req, res) {
   });
 });
 
-/** endpoint to fetch single item from Unified Items */
+/** endpoint to fetch single item from Unified Forms */
 app.get('/getFormOrder/:orderID', function (req, res) {
   const orderID = req.params.orderID;
   pool.query('SELECT * FROM UnifiedForms WHERE Order_Number = ?', [orderID], function (error, results) {
@@ -203,6 +203,51 @@ app.get('/getFormOrder/:orderID', function (req, res) {
     } else {
       res.send(results);
     }
+  });
+});
+
+/** endpoint to fetch single item from Unified Forms based on Type */
+app.get('/getFormOrderByType/:type', function(req, res){
+  let type = req.params.type;
+  pool.query('SELECT * FROM UnifiedForms WHERE Type = ? and Reviewed_Status = "Unreviewed"', [type], function (error, results) {
+    if (error) {
+      res.status(500).send("Error fetching form: " + error);
+    } else {
+      res.send(results);
+    }
+  });
+});
+
+/** endpoint to update an order in Unified Forms table using Order ID and Type*/
+app.post('/updateFormOrders', function (req, res) {
+  const data = req.body;
+
+  if (!data.Order_ID || !data.Type) {
+    return res.status(400).send('Order_ID and Type are required');
+  }
+
+  const { Order_ID, Type, ...updateFields } = data;
+
+  if (Object.keys(updateFields).length === 0) {
+    return res.status(400).send('No fields provided for update');
+  }
+
+  const updateQuery = `
+    UPDATE UnifiedForms 
+    SET ${Object.keys(updateFields).map(column => `${column} = ?`).join(', ')} 
+    WHERE Order_ID = ? AND Type = ?`;
+  
+  const updateValues = [...Object.values(updateFields), Order_ID, Type];
+
+  console.log(updateQuery);
+
+  pool.query(updateQuery, updateValues, function (error, results) {
+    if (error) {
+      console.error('Error updating form:', error);
+      return res.status(500).send('Error updating form');
+    }
+    console.log('Form updated successfully');
+    res.send('Form updated successfully');
   });
 });
 
@@ -218,6 +263,8 @@ app.get('/getSingleItem/:orderID', function (req, res) {
     }
   });
 });
+
+
 
 /** endpoint to fetch all items from Unified Items */
 app.get('/items', function (req, res) {
