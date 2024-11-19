@@ -252,12 +252,28 @@ app.post('/updateFormOrders', function (req, res) {
 });
 
 
+/** endpoint to fetch order items from Unified Items by transaction id*/
+app.get('/getItemByTransactionID/:orderID', function (req, res) {
+  const orderID = req.params.orderID;
+  pool.query('SELECT * FROM UnifiedItems WHERE Item_Transaction_ID = ?', [orderID], function (error, results) {
+    if (error) {
+      res.status(500).send("Error fetching item: " + error);
+    } else if (results.length === 0) {
+      res.status(404).send("Transaction ID does not exist.");
+    } else {
+      res.send(results);
+    }
+  });
+});
+
 /** endpoint to fetch single item from Unified Items */
 app.get('/getSingleItem/:orderID', function (req, res) {
   const orderID = req.params.orderID;
   pool.query('SELECT * FROM UnifiedItems WHERE Order_ID = ?', [orderID], function (error, results) {
     if (error) {
       res.status(500).send("Error fetching item: " + error);
+    } else if (results.length === 0) {
+      res.status(404).send("Order ID does not exist.");
     } else {
       res.send(results);
     }
