@@ -281,7 +281,6 @@ app.get('/getSingleItem/:orderID', function (req, res) {
 });
 
 
-
 /** endpoint to fetch all items from Unified Items */
 app.get('/items', function (req, res) {
   pool.query('SELECT * FROM UnifiedItems', function (error, results) {
@@ -740,18 +739,26 @@ app.delete('/deleteUnifiedItem/:orderID', function (req, res) {
   });
 });
 
-app.post('/alterTable/:column', function (req, res) {
-  const columnName = req.params.column;
-  const query = `ALTER TABLE UnifiedItems ADD ${columnName} VARCHAR(255);`;
+app.post('/alterTable/:tableName', function (req, res) {
+  const tableName = req.params.tableName; 
+  const columns = req.body.columns;
+
+  if (!columns || !Array.isArray(columns) || columns.length === 0) {
+    return res.status(400).send("Please provide an array of columns in the request body.");
+  }
+
+  const columnDefinitions = columns.map(column => `${column.name} ${column.type}`).join(", ");
+  const query = `ALTER TABLE ${tableName} ADD ${columnDefinitions};`;
 
   pool.query(query, function (error, results) {
     if (error) {
       res.status(500).send("Error altering table: " + error);
     } else {
-      res.status(200).send("Table altered, column added: " + columnName);
+      res.status(200).send(`Table "${tableName}" altered, columns added: ${columns.map(col => col.name).join(", ")}`);
     }
   });
 });
+
 
 
 const PORT = 3000;
