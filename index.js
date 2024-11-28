@@ -739,6 +739,30 @@ app.delete('/deleteUnifiedItem/:orderID', function (req, res) {
   });
 });
 
+app.delete('/deleteFormOrder/:orderID', function (req, res) {
+  const orderID = req.params.orderID;
+  const type = req.query.type;
+
+  if (!type) {
+    return res.status(400).send("Missing required 'type' query parameter.");
+  }
+
+  pool.query(
+    'DELETE FROM UnifiedForms WHERE Order_Number = ? AND Type = ?',
+    [orderID, type],
+    function (error, results) {
+      if (error) {
+        res.status(500).send("Error deleting form order: " + error.message);
+      } else if (results.affectedRows > 0) {
+        res.status(204).send(); 
+      } else {
+        res.status(404).send(`Order not found with ID: ${orderID} and Type: ${type}`);
+      }
+    }
+  );
+});
+
+
 app.post('/alterTable/:tableName', function (req, res) {
   const tableName = req.params.tableName; 
   const columns = req.body.columns;
