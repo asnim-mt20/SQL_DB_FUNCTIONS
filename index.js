@@ -207,15 +207,21 @@ app.get('/getFormOrder/:orderID', function (req, res) {
 });
 
 /** endpoint to fetch single item from Unified Forms based on Type */
-app.get('/getFormOrderByType/:type', function(req, res){
+app.get('/getFormOrderByType/:type', function(req, res) {
   let type = req.params.type;
-  pool.query('SELECT * FROM UnifiedForms WHERE Type = ? and Reviewed_Status = "Unreviewed" and Shipped_Status = ""', [type], function (error, results) {
-    if (error) {
-      res.status(500).send("Error fetching form: " + error);
-    } else {
-      res.send(results);
+
+  // Escape the single quotes in the query correctly
+  pool.query(
+    "SELECT * FROM UnifiedForms WHERE Type = ? AND Reviewed_Status = 'Unreviewed' AND (Shipped_Status = '' OR Shipped_Status IS NULL)", 
+    [type], 
+    function(error, results) {
+      if (error) {
+        res.status(500).send("Error fetching form: " + error);
+      } else {
+        res.send(results);
+      }
     }
-  });
+  );
 });
 
 /** endpoint to update an order in Unified Forms table using Order ID and Type*/
