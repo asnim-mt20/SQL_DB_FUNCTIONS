@@ -480,6 +480,61 @@ app.post('/updateAllItems', function (req, res) {
   });
 });
 
+app.post('/updateAllForms', function (req, res) {
+  const data = req.body;
+
+  const failedOrders = [];
+  let updatedOrdersCount = 0;
+
+  data.forEach(order => {
+    const { Order_Number, Type, ...updateFields } = order;
+
+    if (!Order_Number || !Type) {
+      failedOrders.push({ Order_Number, Type, reason: 'Order Number or Type missing' });
+      return;
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      failedOrders.push({ Order_Number, Type, reason: 'No fields provided for update' });
+      return;
+    }
+
+    const updateQuery = `
+      UPDATE UnifiedForms 
+      SET ${Object.keys(updateFields).map(column => `${column} = ?`).join(', ')} 
+      WHERE Order_Number = ? AND Type = ?`;
+
+    const updateValues = [...Object.values(updateFields), Order_Number, Type];
+
+    console.log(updateQuery);
+
+    pool.query(updateQuery, updateValues, function (error, results) {
+      if (error) {
+        console.error(`Error updating form ${Order_Number}, Type ${Type}:`, error);
+        failedOrders.push({ Order_Number, Type, reason: 'Database error' });
+      } else {
+        if (results.affectedRows > 0) {
+          updatedOrdersCount += results.affectedRows;
+          console.log(`Form ${Order_Number}, Type ${Type} updated successfully`);
+        } else {
+          console.log(`Form ${Order_Number}, Type ${Type} does not exist in the database`);
+          failedOrders.push({ Order_Number, Type, reason: 'Not found in database' });
+        }
+      }
+
+      if (updatedOrdersCount + failedOrders.length === data.length) {
+        const responseMessage = {
+          updatedOrdersCount,
+          failedOrders,
+        };
+        res.json(responseMessage);
+      }
+    });
+  });
+});
+
+
+
 /** endpoint get an order from Unified Orders table using Customer Name*/
 app.get('/getOrderByName/:customerName', function (req, res) {
   const c_name = req.params.customerName;
