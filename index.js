@@ -258,7 +258,7 @@ app.post('/updateFormOrders', function (req, res) {
 });
 
 /** endpoint to update an order in Unified Forms table using Order Number only*/
-app.post('/updateFormOrders', function (req, res) {
+app.post('/updateFormByOrderID', function (req, res) {
   const data = req.body;
 
   if (!data.Order_Number) {
