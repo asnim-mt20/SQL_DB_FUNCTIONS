@@ -209,7 +209,7 @@ app.get('/getFormOrder/:orderID', function (req, res) {
 /** endpoint to fetch single item from Unified Forms based on Type */
 app.get('/getFormOrderByType/:type', function(req, res){
   let type = req.params.type;
-  pool.query('SELECT * FROM UnifiedForms WHERE Type = ? and Reviewed_Status = "Unreviewed"', [type], function (error, results) {
+  pool.query('SELECT * FROM UnifiedForms WHERE Type = ? and Reviewed_Status = "Unreviewed" and Shipped_Status = ""', [type], function (error, results) {
     if (error) {
       res.status(500).send("Error fetching form: " + error);
     } else {
