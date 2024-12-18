@@ -257,6 +257,39 @@ app.post('/updateFormOrders', function (req, res) {
   });
 });
 
+/** endpoint to update an order in Unified Forms table using Order Number only*/
+app.post('/updateFormOrders', function (req, res) {
+  const data = req.body;
+
+  if (!data.Order_Number) {
+    return res.status(400).send('Order Number is required');
+  }
+
+  const { Order_Number, ...updateFields } = data;
+
+  if (Object.keys(updateFields).length === 0) {
+    return res.status(400).send('No fields provided for update');
+  }
+
+  const updateQuery = `
+    UPDATE UnifiedForms 
+    SET ${Object.keys(updateFields).map(column => `${column} = ?`).join(', ')} 
+    WHERE Order_Number = ?`;
+  
+  const updateValues = [...Object.values(updateFields), Order_Number];
+
+  console.log(updateQuery);
+
+  pool.query(updateQuery, updateValues, function (error, results) {
+    if (error) {
+      console.error('Error updating form:', error);
+      return res.status(500).send('Error updating form');
+    }
+    console.log('Form updated successfully');
+    res.send('Form updated successfully');
+  });
+});
+
 
 /** endpoint to fetch order items from Unified Items by transaction id*/
 app.get('/getItemByTransactionID/:orderID', function (req, res) {
