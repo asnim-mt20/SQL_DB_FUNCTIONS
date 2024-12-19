@@ -754,7 +754,7 @@ app.post('/updateSatinOrders', function (req, res) {
       console.log("updated orders count "+updatedOrdersCount)
       if (updatedOrdersCount + failedOrders.length === data.length) {
         if (updatedOrdersCount > 0) {
-          let responseMessage = `Updated ${successfulOrders.length} orders successfully. `;
+          let responseMessage = `Updated ${updatedOrdersCount} orders successfully. `;
           if (failedOrders.length > 0) {
             responseMessage += `Failed to update orders: ${failedOrders.join(', ')}`;
           }
@@ -883,17 +883,17 @@ app.get('/getTableSchema/:tableName', function (req, res) {
   const query = `
     SELECT column_name, data_type, character_maximum_length
     FROM information_schema.columns
-    WHERE table_name = $1
+    WHERE table_name = ? 
     ORDER BY ordinal_position;
   `;
 
   pool.query(query, [tableName], function (error, results) {
     if (error) {
       res.status(500).send("Error fetching table schema: " + error);
-    } else if (results.rows.length === 0) {
+    } else if (results.length === 0) {
       res.status(404).send(`Table "${tableName}" not found.`);
     } else {
-      res.status(200).json(results.rows);
+      res.status(200).json(results);
     }
   });
 });
