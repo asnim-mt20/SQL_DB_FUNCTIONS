@@ -877,6 +877,26 @@ app.post('/alterTable/:tableName', function (req, res) {
   });
 });
 
+app.get('/getTableSchema/:tableName', function (req, res) {
+  const tableName = req.params.tableName;
+
+  const query = `
+    SELECT column_name, data_type, character_maximum_length
+    FROM information_schema.columns
+    WHERE table_name = $1
+    ORDER BY ordinal_position;
+  `;
+
+  pool.query(query, [tableName], function (error, results) {
+    if (error) {
+      res.status(500).send("Error fetching table schema: " + error);
+    } else if (results.rows.length === 0) {
+      res.status(404).send(`Table "${tableName}" not found.`);
+    } else {
+      res.status(200).json(results.rows);
+    }
+  });
+});
 
 
 const PORT = 3000;
