@@ -69,7 +69,7 @@ app.post('/addOrders', function (req, res) {
     Shipping_Name, Shipping_Email, Shipping_Address1, Shipping_Address2, Shipping_City, 
     Shipping_State, Shipping_State_Code, Shipping_Country, Shipping_Country_Code, 
     Shipping_Zipcode, Shipping_Phone, Shipping_Company, Shipping_ID, Shipping_Method, 
-    Coupon_Buyer, Coupon_Shop, ReportFlag
+    Coupon_Buyer, Coupon_Shop, ReportFlag, Expected_ShipDate
   ) 
   VALUES ?`;
 
@@ -87,7 +87,7 @@ app.post('/addOrders', function (req, res) {
     order.Billing_Zip_Code, order.Shipping_Name, order.Shipping_Email, order.Shipping_Address1, order.Shipping_Address2,
     order.Shipping_City, order.Shipping_State, order.Shipping_State_Code, order.Shipping_Country,
     order.Shipping_Country_Code, order.Shipping_Zipcode, order.Shipping_Phone, order.Shipping_Company,
-    order.Shipping_ID, order.Shipping_Method, order.Coupon_Buyer, order.Coupon_Shop, "0"
+    order.Shipping_ID, order.Shipping_Method, order.Coupon_Buyer, order.Coupon_Shop, "0", order.Expected_ShipDate
   ]);
 
   // Execute the SQL insert query
@@ -115,7 +115,7 @@ app.post('/addItems', function (req, res) {
     Item_Variation_name6,Item_Variation_value6,Item_Variation_name7,Item_Variation_value7,
     Item_Variation_name8,Item_Variation_value8,Qr_Code,Source_Status,Source_Shipped_Date,
     Ops_Shipped_Status,Ops_Shipped_Date,Item_Price,Order_Total,Shipping_Company,Shipping_ID,
-    Item_Min_Days,Item_Max_Days,ReportFlag,ItemPrice_Avg,ConversionRate,ItemPrice_INR, Customer_Name
+    Item_Min_Days,Item_Max_Days,ReportFlag,ItemPrice_Avg,ConversionRate,ItemPrice_INR, Customer_Name, Expected_ShipDate
   ) 
   VALUES ?`;
 
@@ -128,7 +128,7 @@ app.post('/addItems', function (req, res) {
     item.Item_Variation_name6,item.Item_Variation_value6,item.Item_Variation_name7,item.Item_Variation_value7,
     item.Item_Variation_name8,item.Item_Variation_value8,item.Qr_Code,item.Source_Status,item.Source_Shipped_Date,
     item.Ops_Shipped_Status,item.Ops_Shipped_Date,item.Item_Price,item.Order_Total,item.Shipping_Company,item.Shipping_ID,
-    item.Item_Min_Days,item.Item_Max_Days,"0",item.ItemPrice_Avg,item.ConversionRate,item.ItemPrice_INR, item.Customer_Name
+    item.Item_Min_Days,item.Item_Max_Days,"0",item.ItemPrice_Avg,item.ConversionRate,item.ItemPrice_INR, item.Customer_Name, item.Expected_ShipDate
   ]);
 
   // Execute the SQL insert query
@@ -884,7 +884,7 @@ app.get('/getTableSchema/:tableName', function (req, res) {
     SELECT column_name, data_type, character_maximum_length
     FROM information_schema.columns
     WHERE table_name = ? 
-    ORDER BY ordinal_position;
+    ORDER BY ordinal_position;reviewed
   `;
 
   pool.query(query, [tableName], function (error, results) {
