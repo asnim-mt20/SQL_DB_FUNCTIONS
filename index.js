@@ -51,19 +51,22 @@ app.get('/getSingleOrder/:orderID', function (req, res) {
   });
 });
 
-/** endpoint to get orders from last 2 years where buyer email is missing */
-app.get('/getOrdersWhere/:', function (req, res) {
-  const { shippingEmail, buyerEmail, startDate, endDate } = req.query;
+
+/** Endpoint to get orders from the last 2 years where the buyer email is missing */
+app.get('/getOrdersWhere', function (req, res) {
+  const { startDate, endDate } = req.query;
+
   if (!startDate || !endDate) {
     return res.status(400).json({ error: "Start and end dates are required" });
   }
+
   const query = `
     SELECT * FROM UnifiedOrders 
-    WHERE (Shipping_Email = ? OR Buyer_email = ?) 
+    WHERE (Shipping_Email = '' OR Buyer_email IS NULL OR Buyer_email = '') 
     AND Order_Date BETWEEN ? AND ?
   `;
 
-  pool.query(query, [shippingEmail, buyerEmail, startDate, endDate], function (error, results) {
+  pool.query(query, [startDate, endDate], function (error, results) {
     if (error) {
       res.status(500).json({ error: "Error fetching orders where buyer email is missing: " + error });
     } else {
@@ -71,7 +74,6 @@ app.get('/getOrdersWhere/:', function (req, res) {
     }
   });
 });
-
 
 /** endpoint to add orders in bulk to Unified Orders table */
 app.post('/addOrders', function (req, res) {
