@@ -9,33 +9,33 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // MySQL database configuration
 const pool = mysql.createPool({
-  host: '66.198.240.15', 
-  user: 'nokhnzpl_magikosAdmin', 
-  password: 'magikosTech@2024', 
-  database: 'nokhnzpl_amaziaDB', 
+  host: '66.198.240.15',
+  user: 'nokhnzpl_magikosAdmin',
+  password: 'magikosTech@2024',
+  database: 'nokhnzpl_amaziaDB',
   debug: false
 });
 
-app.get('/', function(req, res) {
-    res.send('Welcome to my Node.js application!');
+app.get('/', function (req, res) {
+  res.send('Welcome to my Node.js application!');
 });
 
-app.post('/data', function(req, res) {
-  const arrayOfObjects = req.body; 
+app.post('/data', function (req, res) {
+  const arrayOfObjects = req.body;
   console.log(arrayOfObjects);
   res.json({ receivedData: arrayOfObjects });
 });
 
 // Endpoint to test database connection
-app.get('/testdb', function(req, res) {
-    pool.query('SELECT * from UnifiedOrders LIMIT 10', function(error, results, fields) {
-        if (error) {
-            console.error('Error testing database connection:', error);
-            res.status(500).send('Error testing database connection');
-        } else {
-            res.send('Database connection successful!');
-        }
-    });
+app.get('/testdb', function (req, res) {
+  pool.query('SELECT * from UnifiedOrders LIMIT 10', function (error, results, fields) {
+    if (error) {
+      console.error('Error testing database connection:', error);
+      res.status(500).send('Error testing database connection');
+    } else {
+      res.send('Database connection successful!');
+    }
+  });
 });
 
 
@@ -47,6 +47,27 @@ app.get('/getSingleOrder/:orderID', function (req, res) {
       res.status(500).send("Error fetching order: " + error);
     } else {
       res.send(results);
+    }
+  });
+});
+
+/** endpoint to get orders from last 2 years where buyer email is missing */
+app.get('/getOrdersWhere/:', function (req, res) {
+  const { shippingEmail, buyerEmail, startDate, endDate } = req.query;
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: "Start and end dates are required" });
+  }
+  const query = `
+    SELECT * FROM UnifiedOrders 
+    WHERE (Shipping_Email = ? OR Buyer_email = ?) 
+    AND Order_Date BETWEEN ? AND ?
+  `;
+
+  pool.query(query, [shippingEmail, buyerEmail, startDate, endDate], function (error, results) {
+    if (error) {
+      res.status(500).json({ error: "Error fetching orders where buyer email is missing: " + error });
+    } else {
+      res.status(200).json(results);
     }
   });
 });
@@ -121,14 +142,14 @@ app.post('/addItems', function (req, res) {
 
   // Map orders array to values array
   const values = itemsArr.map(item => [
-    item.Source,item.Order_ID,item.Order_Date,item.Item_name,item.Item_Quantity,item.Item_Listing_ID,
-    item.Item_SKU,item.Item_Product_ID,item.Item_Transaction_ID,item.Item_Variation_name1,item.Item_Variation_value1,
-    item.Item_Variation_name2,item.Item_Variation_value2,item.Item_Variation_name3,item.Item_Variation_value3,
-    item.Item_Variation_name4,item.Item_Variation_value4,item.Item_Variation_name5,item.Item_Variation_value5,
-    item.Item_Variation_name6,item.Item_Variation_value6,item.Item_Variation_name7,item.Item_Variation_value7,
-    item.Item_Variation_name8,item.Item_Variation_value8,item.Qr_Code,item.Source_Status,item.Source_Shipped_Date,
-    item.Ops_Shipped_Status,item.Ops_Shipped_Date,item.Item_Price,item.Order_Total,item.Shipping_Company,item.Shipping_ID,
-    item.Item_Min_Days,item.Item_Max_Days,"0",item.ItemPrice_Avg,item.ConversionRate,item.ItemPrice_INR, item.Customer_Name, item.Expected_ShipDate
+    item.Source, item.Order_ID, item.Order_Date, item.Item_name, item.Item_Quantity, item.Item_Listing_ID,
+    item.Item_SKU, item.Item_Product_ID, item.Item_Transaction_ID, item.Item_Variation_name1, item.Item_Variation_value1,
+    item.Item_Variation_name2, item.Item_Variation_value2, item.Item_Variation_name3, item.Item_Variation_value3,
+    item.Item_Variation_name4, item.Item_Variation_value4, item.Item_Variation_name5, item.Item_Variation_value5,
+    item.Item_Variation_name6, item.Item_Variation_value6, item.Item_Variation_name7, item.Item_Variation_value7,
+    item.Item_Variation_name8, item.Item_Variation_value8, item.Qr_Code, item.Source_Status, item.Source_Shipped_Date,
+    item.Ops_Shipped_Status, item.Ops_Shipped_Date, item.Item_Price, item.Order_Total, item.Shipping_Company, item.Shipping_ID,
+    item.Item_Min_Days, item.Item_Max_Days, "0", item.ItemPrice_Avg, item.ConversionRate, item.ItemPrice_INR, item.Customer_Name, item.Expected_ShipDate
   ]);
 
   // Execute the SQL insert query
@@ -170,15 +191,15 @@ app.post('/addFormOrders', function (req, res) {
   // Map orders array to values array
   const values = ordersArr.map(form => {
     return [
-      form.Type,form.Order_Number,form.Order_Date,form.Email_Address,form.Wedding_Date,form.NeedBy_Date,form.Wedding_Colors,form.Adult_Outfits,form.Any_Child_Outfits,
-      form.Child_Outfits,form.Fabric_Selected,form.Sizing_Country,form.Adult_1,form.Adult_2,form.Adult_3,form.Adult_4,form.Adult_5,
-      form.Adult_6,form.Adult_7,form.Adult_8,form.Adult_9,form.Adult_10,form.Adult_11,form.Adult_12,form.Adult_13,form.Adult_14,
-      form.Adult_15,form.Adult_16,form.Adult_17,form.Adult_18,form.Adult_19,form.Adult_20,form.Adult_21,form.Adult_22,form.Adult_23,
-      form.Adult_24,form.Adult_25,form.Child_1,form.Child_2,form.Child_3,form.Child_4,form.Child_5,form.Free_Belt_Loops,form.Add_on,
-      form.Heart_Shaped_Cut_Name,form.Heart_Shaped_Cut_Price,form.Heart_Shaped_Cut_Quantity,form.Selected_Packaging,
-      form.Add_Robes_Flag,form.Discounted_Cost_Robes_Name,form.Discounted_Cost_Robes_Price,form.Discounted_Cost_Robes_Quantity,
-      form.Total,form.Offer_Emails,form.CreatedBy_UserID,form.Entry_Id,form.Entry_Date,form.Source_Url,form.Transaction_Id,form.Payment_Amount,
-      form.Payment_Date,form.Payment_Status,form.Post_Id,form.User_Agent,form.User_IP,form.Reviewed_Status,form.Shipped_Status
+      form.Type, form.Order_Number, form.Order_Date, form.Email_Address, form.Wedding_Date, form.NeedBy_Date, form.Wedding_Colors, form.Adult_Outfits, form.Any_Child_Outfits,
+      form.Child_Outfits, form.Fabric_Selected, form.Sizing_Country, form.Adult_1, form.Adult_2, form.Adult_3, form.Adult_4, form.Adult_5,
+      form.Adult_6, form.Adult_7, form.Adult_8, form.Adult_9, form.Adult_10, form.Adult_11, form.Adult_12, form.Adult_13, form.Adult_14,
+      form.Adult_15, form.Adult_16, form.Adult_17, form.Adult_18, form.Adult_19, form.Adult_20, form.Adult_21, form.Adult_22, form.Adult_23,
+      form.Adult_24, form.Adult_25, form.Child_1, form.Child_2, form.Child_3, form.Child_4, form.Child_5, form.Free_Belt_Loops, form.Add_on,
+      form.Heart_Shaped_Cut_Name, form.Heart_Shaped_Cut_Price, form.Heart_Shaped_Cut_Quantity, form.Selected_Packaging,
+      form.Add_Robes_Flag, form.Discounted_Cost_Robes_Name, form.Discounted_Cost_Robes_Price, form.Discounted_Cost_Robes_Quantity,
+      form.Total, form.Offer_Emails, form.CreatedBy_UserID, form.Entry_Id, form.Entry_Date, form.Source_Url, form.Transaction_Id, form.Payment_Amount,
+      form.Payment_Date, form.Payment_Status, form.Post_Id, form.User_Agent, form.User_IP, form.Reviewed_Status, form.Shipped_Status
     ];
   });
 
@@ -207,14 +228,14 @@ app.get('/getFormOrder/:orderID', function (req, res) {
 });
 
 /** endpoint to fetch single item from Unified Forms based on Type */
-app.get('/getFormOrderByType/:type', function(req, res) {
+app.get('/getFormOrderByType/:type', function (req, res) {
   let type = req.params.type;
 
   // Escape the single quotes in the query correctly
   pool.query(
-    "SELECT * FROM UnifiedForms WHERE Type = ? AND Reviewed_Status = 'Unreviewed' AND (Shipped_Status = '' OR Shipped_Status IS NULL)", 
-    [type], 
-    function(error, results) {
+    "SELECT * FROM UnifiedForms WHERE Type = ? AND Reviewed_Status = 'Unreviewed' AND (Shipped_Status = '' OR Shipped_Status IS NULL)",
+    [type],
+    function (error, results) {
       if (error) {
         res.status(500).send("Error fetching form: " + error);
       } else {
@@ -242,7 +263,7 @@ app.post('/updateFormOrders', function (req, res) {
     UPDATE UnifiedForms 
     SET ${Object.keys(updateFields).map(column => `${column} = ?`).join(', ')} 
     WHERE Order_Number = ? AND Type = ?`;
-  
+
   const updateValues = [...Object.values(updateFields), Order_Number, Type];
 
   console.log(updateQuery);
@@ -275,7 +296,7 @@ app.post('/updateFormByOrderID', function (req, res) {
     UPDATE UnifiedForms 
     SET ${Object.keys(updateFields).map(column => `${column} = ?`).join(', ')} 
     WHERE Order_Number = ?`;
-  
+
   const updateValues = [...Object.values(updateFields), Order_Number];
 
   console.log(updateQuery);
@@ -333,11 +354,11 @@ app.get('/items', function (req, res) {
 });
 
 /** endpoint to fetch Order ID and Order date from Unified Orders table */
-app.get('/ordersByDate',function(req,res){
-  pool.query('Select Order_ID,Order_Date from UnifiedOrders ORDER BY Order_Date DESC',function(error,results){
-    if(error){
+app.get('/ordersByDate', function (req, res) {
+  pool.query('Select Order_ID,Order_Date from UnifiedOrders ORDER BY Order_Date DESC', function (error, results) {
+    if (error) {
       res.status(500).send("Orders could not be fetched")
-    }else{
+    } else {
       res.send(results)
     }
   });
@@ -443,14 +464,14 @@ app.post('/updateAllOrders', function (req, res) {
         }
       }
 
-      console.log("updated orders count "+updatedOrdersCount)
-	  if (updatedOrdersCount + failedOrders.length === data.length) {
+      console.log("updated orders count " + updatedOrdersCount)
+      if (updatedOrdersCount + failedOrders.length === data.length) {
         if (updatedOrdersCount > 0) {
           let responseMessage = `Updated ${updatedOrdersCount} orders successfully. `;
           if (failedOrders.length > 0) {
             responseMessage += `Failed to update orders: ${failedOrders.join(', ')}`;
           }
-	 res.json({
+          res.json({
             status: "success",
             failedOrders: failedOrders
           })
@@ -497,14 +518,14 @@ app.post('/updateAllItems', function (req, res) {
         }
       }
 
-      console.log("updated orders count "+updatedItemsCount)
-	  if (updatedItemsCount + failedOrders.length === data.length) {
+      console.log("updated orders count " + updatedItemsCount)
+      if (updatedItemsCount + failedOrders.length === data.length) {
         if (updatedItemsCount > 0) {
           let responseMessage = `Updated ${updatedItemsCount} orders successfully. `;
           if (failedOrders.length > 0) {
             responseMessage += `Failed to update orders: ${failedOrders.join(', ')}`;
           }
-	 res.json({
+          res.json({
             status: "success",
             failedOrders: failedOrders
           })
@@ -609,11 +630,11 @@ app.post('/addSatinOrders', function (req, res) {
     return res.status(400).send('Invalid input data');
   }
 
-const newOrderNumbers = ordersArr.map(order => order.orderNumber);
+  const newOrderNumbers = ordersArr.map(order => order.orderNumber);
 
-const checkQuery = 'SELECT orderNumber FROM SatinOrders WHERE orderNumber IN (?)';
+  const checkQuery = 'SELECT orderNumber FROM SatinOrders WHERE orderNumber IN (?)';
 
-pool.query(checkQuery, [newOrderNumbers], function (error, results) {
+  pool.query(checkQuery, [newOrderNumbers], function (error, results) {
     if (error) {
       console.error('Error checking existing order numbers:', error);
       return res.status(500).send('Error checking existing order numbers');
@@ -621,7 +642,7 @@ pool.query(checkQuery, [newOrderNumbers], function (error, results) {
 
     // Extract existing order numbers from the results
     const existingOrderNumbers = results.map(row => row.orderNumber);
-console.log('Existing order numbers:', existingOrderNumbers);
+    console.log('Existing order numbers:', existingOrderNumbers);
 
     // Filter out orders with existing order numbers
     const ordersToInsert = ordersArr.filter(order => !existingOrderNumbers.includes(order.orderNumber.toString()));
@@ -664,7 +685,7 @@ console.log('Existing order numbers:', existingOrderNumbers);
       const reviewedItems = JSON.stringify(order.reviewedItems || {});
 
       return [
-        order.orderNumber, order.orderDate, order.type, order.customer_name, order.number_of_items, order.wedding_date, 
+        order.orderNumber, order.orderDate, order.type, order.customer_name, order.number_of_items, order.wedding_date,
         order.pockets, items, reviewedItems, order.reviewStatus || ""
       ];
     });
@@ -729,7 +750,7 @@ app.post('/updateSatinOrders', function (req, res) {
   data.forEach(order => {
     const orderId = order.orderNumber;
 
-    
+
     const columnsToUpdate = Object.keys(order);
     const updateQuery = `UPDATE SatinOrders SET ${columnsToUpdate.map(column => `${column} = ?`).join(', ')} WHERE orderNumber = ?`;
 
@@ -751,7 +772,7 @@ app.post('/updateSatinOrders', function (req, res) {
         }
       }
 
-      console.log("updated orders count "+updatedOrdersCount)
+      console.log("updated orders count " + updatedOrdersCount)
       if (updatedOrdersCount + failedOrders.length === data.length) {
         if (updatedOrdersCount > 0) {
           let responseMessage = `Updated ${updatedOrdersCount} orders successfully. `;
@@ -793,7 +814,7 @@ app.delete('/deleteSingleSatinOrder/:orderID', function (req, res) {
     } else {
       // Check if any rows were affected (i.e., if the order was actually deleted)
       if (results.affectedRows > 0) {
-        res.status(204).send("Order deleted: "+orderID);
+        res.status(204).send("Order deleted: " + orderID);
       } else {
         res.status(404).send("Order not found: " + orderID);
       }
@@ -809,7 +830,7 @@ app.delete('/deleteUnifiedOrder/:orderID', function (req, res) {
     } else {
       // Check if any rows were affected (i.e., if the order was actually deleted)
       if (results.affectedRows > 0) {
-        res.status(204).send("Order deleted: "+orderID);
+        res.status(204).send("Order deleted: " + orderID);
       } else {
         res.status(404).send("Order not found: " + orderID);
       }
@@ -825,7 +846,7 @@ app.delete('/deleteUnifiedItem/:orderID', function (req, res) {
     } else {
       // Check if any rows were affected (i.e., if the order was actually deleted)
       if (results.affectedRows > 0) {
-        res.status(204).send("Order deleted: "+ orderID);
+        res.status(204).send("Order deleted: " + orderID);
       } else {
         res.status(404).send("Order not found: " + orderID);
       }
@@ -848,7 +869,7 @@ app.delete('/deleteFormOrder/:orderID', function (req, res) {
       if (error) {
         res.status(500).send("Error deleting form order: " + error.message);
       } else if (results.affectedRows > 0) {
-        res.status(204).send(); 
+        res.status(204).send();
       } else {
         res.status(404).send(`Order not found with ID: ${orderID} and Type: ${type}`);
       }
@@ -858,7 +879,7 @@ app.delete('/deleteFormOrder/:orderID', function (req, res) {
 
 
 app.post('/alterTable/:tableName', function (req, res) {
-  const tableName = req.params.tableName; 
+  const tableName = req.params.tableName;
   const columns = req.body.columns;
 
   if (!columns || !Array.isArray(columns) || columns.length === 0) {
@@ -903,3 +924,16 @@ const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+
+
+const newPromise = new Promise((res, reject) => {
+  document.getElementById("button1").addEventListener('click', () => {
+    res("resolved value")
+  })
+  document.getElementById("button2").addEventListener('click', () => {
+    rej("value rejected")
+  })
+})
+
+newPromise.then(res => console.log(res)).catch(err => { console.log(err) })
