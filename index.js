@@ -62,13 +62,13 @@ app.get('/getOrdersWhere', function (req, res) {
 
   const query = `
     SELECT * FROM UnifiedOrders 
-    WHERE (Shipping_Email = '' OR Buyer_email IS NULL OR Buyer_email = '') 
+    WHERE (Buyer_email IS NULL OR Buyer_email = '') 
     AND Order_Date BETWEEN ? AND ?
   `;
 
   pool.query(query, [startDate, endDate], function (error, results) {
     if (error) {
-      res.status(500).json({ error: "Error fetching orders where buyer email is missing: " + error });
+      res.status(500).json({ error: "Error fetching orders: " + error });
     } else {
       res.status(200).json(results);
     }
@@ -879,7 +879,6 @@ app.delete('/deleteFormOrder/:orderID', function (req, res) {
   );
 });
 
-
 app.post('/alterTable/:tableName', function (req, res) {
   const tableName = req.params.tableName;
   const columns = req.body.columns;
@@ -888,8 +887,10 @@ app.post('/alterTable/:tableName', function (req, res) {
     return res.status(400).send("Please provide an array of columns in the request body.");
   }
 
-  const columnDefinitions = columns.map(column => `${column.name} ${column.type}`).join(", ");
-  const query = `ALTER TABLE ${tableName} ADD ${columnDefinitions};`;
+  const columnDefinitions = columns.map(column => `ADD COLUMN \`${column.name}\` ${column.type}`).join(", ");
+  const query = `ALTER TABLE \`${tableName}\` ${columnDefinitions};`;
+
+  console.log("Executing query:", query); 
 
   pool.query(query, function (error, results) {
     if (error) {
@@ -899,6 +900,7 @@ app.post('/alterTable/:tableName', function (req, res) {
     }
   });
 });
+
 
 app.get('/getTableSchema/:tableName', function (req, res) {
   const tableName = req.params.tableName;
