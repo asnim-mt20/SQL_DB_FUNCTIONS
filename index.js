@@ -75,6 +75,36 @@ app.get('/getOrdersWhere', function (req, res) {
   });
 });
 
+app.get('/getItemsWhere', function (req, res) {
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: "Start and end dates are required" });
+  }
+
+  const query = `
+    SELECT 
+      uo.Order_ID, 
+      GROUP_CONCAT(ui.Item_name SEPARATOR ', ') AS Item_names, 
+      uo.Order_Date, 
+      uo.Customer_Name, 
+      uo.Buyer_email 
+    FROM UnifiedOrders uo
+    JOIN UnifiedItems ui ON uo.Order_ID = ui.Order_ID
+    WHERE uo.Order_Date BETWEEN ? AND ?
+    GROUP BY uo.Order_ID;
+  `;
+
+  pool.query(query, [startDate, endDate], function (error, results) {
+    if (error) {
+      res.status(500).json({ error: "Error fetching orders: " + error });
+    } else {
+      res.status(200).json(results);
+    }
+  });
+});
+
+
 /** endpoint to add orders in bulk to Unified Orders table */
 app.post('/addOrders', function (req, res) {
   var ordersArr = req.body;
