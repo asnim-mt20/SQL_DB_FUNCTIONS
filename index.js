@@ -105,96 +105,143 @@ app.get('/getItemsWhere', function (req, res) {
 });
 
 
-/** endpoint to add orders in bulk to Unified Orders table */
+/** Endpoint to add orders in bulk to Unified Orders table */
 app.post('/addOrders', function (req, res) {
   var ordersArr = req.body;
+  var orderIDs = ordersArr.map(order => order.Order_ID);
 
-  const insertQuery = `
-  INSERT INTO UnifiedOrders (
-    Source, Order_ID, Order_Date, Qty_of_LineItems, Ops_Shipped_Status, Ops_Shipped_Date, 
-    Source_Shipped_Status, Source_Shipped_Date, Buyer_User_ID, Buyer_email, Customer_Name, 
-    Address_Line1, Address_Line2, Address_City, Address_State, Address_postalCode, 
-    Address_Country, Address_Country_Code, Customer_Address, Order_Total, Order_Value, 
-    Shipping_Amount, Sales_Tax, Handling_Cost, Discount_Total, Coupon_Code, Payment_status, 
-    Payment_method, Payment_Info, Payment_Reference_ID, Message_from_Buyer, Gift_Message, 
-    Gift_Wrap_Price, Billing_Name, Billing_Address1, Billing_Address2, Billing_City, 
-    Billing_State, Billing_State_Code, Billing_Country, Billing_Country_Code, Billing_Zip_Code, 
-    Shipping_Name, Shipping_Email, Shipping_Address1, Shipping_Address2, Shipping_City, 
-    Shipping_State, Shipping_State_Code, Shipping_Country, Shipping_Country_Code, 
-    Shipping_Zipcode, Shipping_Phone, Shipping_Company, Shipping_ID, Shipping_Method, 
-    Coupon_Buyer, Coupon_Shop, ReportFlag, Expected_ShipDate
-  ) 
-  VALUES ?`;
+  // Query to check for existing Order_IDs
+  const checkQuery = `SELECT Order_ID FROM UnifiedOrders WHERE Order_ID IN (?)`;
 
-  // Map orders array to values array
-  const values = ordersArr.map(order => [
-    order.Source, order.Order_ID, order.Order_Date, order.Qty_of_LineItems, order.Ops_Shipped_Status,
-    order.Ops_Shipped_Date, order.Source_Shipped_Status, order.Source_Shipped_Date, order.Buyer_User_ID,
-    order.Buyer_email, order.Customer_Name, order.Address_Line1, order.Address_Line2, order.Address_City,
-    order.Address_State, order.Address_postalCode, order.Address_Country, order.Address_Country_Code,
-    order.Customer_Address, order.Order_Total, order.Order_Value, order.Shipping_Amount, order.Sales_Tax,
-    order.Handling_Cost, order.Discount_Total, order.Coupon_Code, order.Payment_status, order.Payment_method,
-    order.Payment_Info, order.Payment_Reference_ID, order.Message_from_Buyer, order.Gift_Message,
-    order.Gift_Wrap_Price, order.Billing_Name, order.Billing_Address1, order.Billing_Address2, order.Billing_City,
-    order.Billing_State, order.Billing_State_Code, order.Billing_Country, order.Billing_Country_Code,
-    order.Billing_Zip_Code, order.Shipping_Name, order.Shipping_Email, order.Shipping_Address1, order.Shipping_Address2,
-    order.Shipping_City, order.Shipping_State, order.Shipping_State_Code, order.Shipping_Country,
-    order.Shipping_Country_Code, order.Shipping_Zipcode, order.Shipping_Phone, order.Shipping_Company,
-    order.Shipping_ID, order.Shipping_Method, order.Coupon_Buyer, order.Coupon_Shop, "0", order.Expected_ShipDate
-  ]);
-
-  // Execute the SQL insert query
-  pool.query(insertQuery, [values], function (error, results) {
+  pool.query(checkQuery, [orderIDs], function (error, results) {
     if (error) {
-      console.error('Error inserting orders:', error);
-      return res.status(500).send('Error inserting orders');
-    } else {
-      console.log('Orders inserted successfully');
-      return res.status(200).send('Orders inserted successfully');
+      console.error('Error checking existing orders:', error);
+      return res.status(500).send('Error checking existing orders');
     }
+
+    const existingOrderIDs = results.map(row => row.Order_ID);
+    if (existingOrderIDs.length > 0) {
+      return res.status(409).json({
+        message: 'Duplicate Order_IDs found',
+        duplicateOrderIDs: existingOrderIDs
+      });
+    }
+
+    // If no duplicates, proceed with insertion
+    const insertQuery = `
+    INSERT INTO UnifiedOrders (
+      Source, Order_ID, Order_Date, Qty_of_LineItems, Ops_Shipped_Status, Ops_Shipped_Date, 
+      Source_Shipped_Status, Source_Shipped_Date, Buyer_User_ID, Buyer_email, Customer_Name, 
+      Address_Line1, Address_Line2, Address_City, Address_State, Address_postalCode, 
+      Address_Country, Address_Country_Code, Customer_Address, Order_Total, Order_Value, 
+      Shipping_Amount, Sales_Tax, Handling_Cost, Discount_Total, Coupon_Code, Payment_status, 
+      Payment_method, Payment_Info, Payment_Reference_ID, Message_from_Buyer, Gift_Message, 
+      Gift_Wrap_Price, Billing_Name, Billing_Address1, Billing_Address2, Billing_City, 
+      Billing_State, Billing_State_Code, Billing_Country, Billing_Country_Code, Billing_Zip_Code, 
+      Shipping_Name, Shipping_Email, Shipping_Address1, Shipping_Address2, Shipping_City, 
+      Shipping_State, Shipping_State_Code, Shipping_Country, Shipping_Country_Code, 
+      Shipping_Zipcode, Shipping_Phone, Shipping_Company, Shipping_ID, Shipping_Method, 
+      Coupon_Buyer, Coupon_Shop, ReportFlag, Expected_ShipDate
+    ) 
+    VALUES ?`;
+
+    const values = ordersArr.map(order => [
+      order.Source, order.Order_ID, order.Order_Date, order.Qty_of_LineItems, order.Ops_Shipped_Status,
+      order.Ops_Shipped_Date, order.Source_Shipped_Status, order.Source_Shipped_Date, order.Buyer_User_ID,
+      order.Buyer_email, order.Customer_Name, order.Address_Line1, order.Address_Line2, order.Address_City,
+      order.Address_State, order.Address_postalCode, order.Address_Country, order.Address_Country_Code,
+      order.Customer_Address, order.Order_Total, order.Order_Value, order.Shipping_Amount, order.Sales_Tax,
+      order.Handling_Cost, order.Discount_Total, order.Coupon_Code, order.Payment_status, order.Payment_method,
+      order.Payment_Info, order.Payment_Reference_ID, order.Message_from_Buyer, order.Gift_Message,
+      order.Gift_Wrap_Price, order.Billing_Name, order.Billing_Address1, order.Billing_Address2, order.Billing_City,
+      order.Billing_State, order.Billing_State_Code, order.Billing_Country, order.Billing_Country_Code,
+      order.Billing_Zip_Code, order.Shipping_Name, order.Shipping_Email, order.Shipping_Address1, order.Shipping_Address2,
+      order.Shipping_City, order.Shipping_State, order.Shipping_State_Code, order.Shipping_Country,
+      order.Shipping_Country_Code, order.Shipping_Zipcode, order.Shipping_Phone, order.Shipping_Company,
+      order.Shipping_ID, order.Shipping_Method, order.Coupon_Buyer, order.Coupon_Shop, "0", order.Expected_ShipDate
+    ]);
+
+    pool.query(insertQuery, [values], function (error, results) {
+      if (error) {
+        console.error('Error inserting orders:', error);
+        return res.status(500).send('Error inserting orders');
+      } else {
+        console.log('Orders inserted successfully');
+        return res.status(200).send('Orders inserted successfully');
+      }
+    });
   });
 });
 
-/** endpoint to add items in bulk to Unified Items table */
-app.post('/addItems', function (req, res) {
-  var itemsArr = req.body;
 
-  const insertQuery = `
-  INSERT INTO UnifiedItems (
-    Source,Order_ID,Order_Date,Item_name,Item_Quantity,Item_Listing_ID,
-    Item_SKU,Item_Product_ID,Item_Transaction_ID,Item_Variation_name1,Item_Variation_value1,
-    Item_Variation_name2,Item_Variation_value2,Item_Variation_name3,Item_Variation_value3,
-    Item_Variation_name4,Item_Variation_value4,Item_Variation_name5,Item_Variation_value5,
-    Item_Variation_name6,Item_Variation_value6,Item_Variation_name7,Item_Variation_value7,
-    Item_Variation_name8,Item_Variation_value8,Qr_Code,Source_Status,Source_Shipped_Date,
-    Ops_Shipped_Status,Ops_Shipped_Date,Item_Price,Order_Total,Shipping_Company,Shipping_ID,
-    Item_Min_Days,Item_Max_Days,ReportFlag,ItemPrice_Avg,ConversionRate,ItemPrice_INR, Customer_Name, Expected_ShipDate
-  ) 
-  VALUES ?`;
+/** Endpoint to add orders in bulk to Unified Orders table */
+app.post('/addOrders', function (req, res) {
+  var ordersArr = req.body;
+  var qrCodes = ordersArr.map(order => order.Qr_Code); // Extract Qr_Codes
 
-  // Map orders array to values array
-  const values = itemsArr.map(item => [
-    item.Source, item.Order_ID, item.Order_Date, item.Item_name, item.Item_Quantity, item.Item_Listing_ID,
-    item.Item_SKU, item.Item_Product_ID, item.Item_Transaction_ID, item.Item_Variation_name1, item.Item_Variation_value1,
-    item.Item_Variation_name2, item.Item_Variation_value2, item.Item_Variation_name3, item.Item_Variation_value3,
-    item.Item_Variation_name4, item.Item_Variation_value4, item.Item_Variation_name5, item.Item_Variation_value5,
-    item.Item_Variation_name6, item.Item_Variation_value6, item.Item_Variation_name7, item.Item_Variation_value7,
-    item.Item_Variation_name8, item.Item_Variation_value8, item.Qr_Code, item.Source_Status, item.Source_Shipped_Date,
-    item.Ops_Shipped_Status, item.Ops_Shipped_Date, item.Item_Price, item.Order_Total, item.Shipping_Company, item.Shipping_ID,
-    item.Item_Min_Days, item.Item_Max_Days, "0", item.ItemPrice_Avg, item.ConversionRate, item.ItemPrice_INR, item.Customer_Name, item.Expected_ShipDate
-  ]);
+  // Query to check for existing Qr_Codes
+  const checkQuery = `SELECT Qr_Code FROM UnifiedOrders WHERE Qr_Code IN (?)`;
 
-  // Execute the SQL insert query
-  pool.query(insertQuery, [values], function (error, results) {
+  pool.query(checkQuery, [qrCodes], function (error, results) {
     if (error) {
-      console.error('Error inserting items:', error);
-      return res.status(500).send('Error inserting items');
-    } else {
-      console.log('Items inserted successfully');
-      return res.status(200).send('Items inserted successfully');
+      console.error('Error checking existing orders:', error);
+      return res.status(500).send('Error checking existing orders');
     }
+
+    const existingQrCodes = results.map(row => row.Qr_Code);
+    if (existingQrCodes.length > 0) {
+      return res.status(409).json({
+        message: 'Duplicate Qr_Codes found',
+        duplicateQrCodes: existingQrCodes
+      });
+    }
+
+    // If no duplicates, proceed with insertion
+    const insertQuery = `
+    INSERT INTO UnifiedOrders (
+      Source, Order_ID, Qr_Code, Order_Date, Qty_of_LineItems, Ops_Shipped_Status, Ops_Shipped_Date, 
+      Source_Shipped_Status, Source_Shipped_Date, Buyer_User_ID, Buyer_email, Customer_Name, 
+      Address_Line1, Address_Line2, Address_City, Address_State, Address_postalCode, 
+      Address_Country, Address_Country_Code, Customer_Address, Order_Total, Order_Value, 
+      Shipping_Amount, Sales_Tax, Handling_Cost, Discount_Total, Coupon_Code, Payment_status, 
+      Payment_method, Payment_Info, Payment_Reference_ID, Message_from_Buyer, Gift_Message, 
+      Gift_Wrap_Price, Billing_Name, Billing_Address1, Billing_Address2, Billing_City, 
+      Billing_State, Billing_State_Code, Billing_Country, Billing_Country_Code, Billing_Zip_Code, 
+      Shipping_Name, Shipping_Email, Shipping_Address1, Shipping_Address2, Shipping_City, 
+      Shipping_State, Shipping_State_Code, Shipping_Country, Shipping_Country_Code, 
+      Shipping_Zipcode, Shipping_Phone, Shipping_Company, Shipping_ID, Shipping_Method, 
+      Coupon_Buyer, Coupon_Shop, ReportFlag, Expected_ShipDate
+    ) 
+    VALUES ?`;
+
+    const values = ordersArr.map(order => [
+      order.Source, order.Order_ID, order.Qr_Code, order.Order_Date, order.Qty_of_LineItems, order.Ops_Shipped_Status,
+      order.Ops_Shipped_Date, order.Source_Shipped_Status, order.Source_Shipped_Date, order.Buyer_User_ID,
+      order.Buyer_email, order.Customer_Name, order.Address_Line1, order.Address_Line2, order.Address_City,
+      order.Address_State, order.Address_postalCode, order.Address_Country, order.Address_Country_Code,
+      order.Customer_Address, order.Order_Total, order.Order_Value, order.Shipping_Amount, order.Sales_Tax,
+      order.Handling_Cost, order.Discount_Total, order.Coupon_Code, order.Payment_status, order.Payment_method,
+      order.Payment_Info, order.Payment_Reference_ID, order.Message_from_Buyer, order.Gift_Message,
+      order.Gift_Wrap_Price, order.Billing_Name, order.Billing_Address1, order.Billing_Address2, order.Billing_City,
+      order.Billing_State, order.Billing_State_Code, order.Billing_Country, order.Billing_Country_Code,
+      order.Billing_Zip_Code, order.Shipping_Name, order.Shipping_Email, order.Shipping_Address1, order.Shipping_Address2,
+      order.Shipping_City, order.Shipping_State, order.Shipping_State_Code, order.Shipping_Country,
+      order.Shipping_Country_Code, order.Shipping_Zipcode, order.Shipping_Phone, order.Shipping_Company,
+      order.Shipping_ID, order.Shipping_Method, order.Coupon_Buyer, order.Coupon_Shop, "0", order.Expected_ShipDate
+    ]);
+
+    pool.query(insertQuery, [values], function (error, results) {
+      if (error) {
+        console.error('Error inserting orders:', error);
+        return res.status(500).send('Error inserting orders');
+      } else {
+        console.log('Orders inserted successfully');
+        return res.status(200).send('Orders inserted successfully');
+      }
+    });
   });
 });
+
 
 /** Endpoint to add orders in bulk to Unified Forms table */
 app.post('/addFormOrders', function (req, res) {
