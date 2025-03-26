@@ -181,6 +181,7 @@ app.post('/addItems', function (req, res) {
 
   // Query to check for existing Qr_Code values
   const checkQuery = `SELECT Qr_Code FROM UnifiedItems WHERE Qr_Code IN (?)`;
+  console.log(checkQuery)
 
   pool.query(checkQuery, [qrCodes], function (error, results) {
     if (error) {
@@ -894,35 +895,37 @@ app.delete('/deleteSingleSatinOrder/:orderID', function (req, res) {
 
 app.delete('/deleteUnifiedOrder/:orderID', function (req, res) {
   const orderID = req.params.orderID;
+  
   pool.query('DELETE FROM UnifiedOrders WHERE Order_ID = ?', [orderID], function (error, results) {
     if (error) {
-      res.status(500).send("Error deleting order: " + error);
+      return res.status(500).send("Error deleting order: " + error);
+    }
+
+    if (results.affectedRows > 0) {
+      return res.status(200).send("Order deleted: " + orderID); // Changed from 204 to 200
     } else {
-      // Check if any rows were affected (i.e., if the order was actually deleted)
-      if (results.affectedRows > 0) {
-        res.status(204).send("Order deleted: " + orderID);
-      } else {
-        res.status(404).send("Order not found: " + orderID);
-      }
+      return res.status(404).send("Order not found: " + orderID);
     }
   });
 });
 
+
 app.delete('/deleteUnifiedItem/:orderID', function (req, res) {
   const orderID = req.params.orderID;
+  
   pool.query('DELETE FROM UnifiedItems WHERE Order_ID = ?', [orderID], function (error, results) {
     if (error) {
-      res.status(500).send("Error deleting order: " + error);
+      return res.status(500).send("Error deleting order: " + error);
+    }
+
+    if (results.affectedRows > 0) {
+      return res.status(200).send("Order deleted: " + orderID); // Changed from 204 to 200
     } else {
-      // Check if any rows were affected (i.e., if the order was actually deleted)
-      if (results.affectedRows > 0) {
-        res.status(204).send("Order deleted: " + orderID);
-      } else {
-        res.status(404).send("Order not found: " + orderID);
-      }
+      return res.status(404).send("Order not found: " + orderID);
     }
   });
 });
+
 
 app.delete('/deleteFormOrder/:orderID', function (req, res) {
   const orderID = req.params.orderID;
