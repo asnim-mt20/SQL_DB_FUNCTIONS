@@ -349,6 +349,39 @@ app.post('/updateFormOrders', function (req, res) {
   });
 });
 
+app.post('/updateWrongOrder', function (req, res) {
+  const data = req.body;
+
+  const previousOrderNumber = data.Previous_Order_Number || data.Order_Number;
+  const type = data.Type;
+
+  if (!previousOrderNumber || !type) {
+    return res.status(400).send('Previous or current Order Number and Type are required');
+  }
+
+  const { Previous_Order_Number, Order_Number, Type, ...updateFields } = data;
+
+  if (!Order_Number) {
+    return res.status(400).send('New Order Number is required when correcting');
+  }
+
+  const updateQuery = `
+    UPDATE UnifiedForms 
+    SET ${Object.keys(updateFields).map(column => `${column} = ?`).join(', ')} 
+    WHERE Order_Number = ? AND Type = ?`;
+
+  const updateValues = [...Object.values(updateFields), previousOrderNumber, type];
+
+  pool.query(updateQuery, updateValues, function (error, results) {
+    if (error) {
+      console.error('Error updating form:', error);
+      return res.status(500).send('Error updating form');
+    }
+    res.send('Form updated successfully');
+  });
+});
+
+
 /** endpoint to update an order in Unified Forms table using Order Number only*/
 app.post('/updateFormByOrderID', function (req, res) {
   const data = req.body;
