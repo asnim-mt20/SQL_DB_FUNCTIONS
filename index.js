@@ -350,37 +350,28 @@ app.post('/updateFormOrders', function (req, res) {
 });
 
 app.post('/updateWrongOrder', function (req, res) {
-  const data = req.body;
+  const { Previous_Order_Number, Order_Number, Type } = req.body;
 
-  const previousOrderNumber = data.Previous_Order_Number || data.Order_Number;
-  const type = data.Type;
-
-  if (!previousOrderNumber || !type) {
-    return res.status(400).send('Previous or current Order Number and Type are required');
+  if (!Previous_Order_Number || !Type || !Order_Number) {
+    return res.status(400).send('Wrong or current Order Number and Type are required');
   }
 
-  const updateFields = {};
-  if (data.Order_Number) updateFields.Order_Number = data.Order_Number;
-
-  if (Object.keys(updateFields).length === 0) {
-    return res.status(400).send('No valid fields provided for update');
-  }
-
-  const updateQuery = `
-    UPDATE UnifiedForms 
-    SET ${Object.keys(updateFields).map(column => `${column} = ?`).join(', ')} 
+  const sql = `
+    UPDATE UnifiedForms
+    SET Order_Number = ?
     WHERE Order_Number = ? AND Type = ?`;
 
-  const updateValues = [...Object.values(updateFields), previousOrderNumber, type];
+  const values = [Order_Number, Previous_Order_Number, Type];
 
-  pool.query(updateQuery, updateValues, function (error, results) {
-    if (error) {
-      console.error('Error updating form:', error);
-      return res.status(500).send('Error updating form: ' + error.message);
+  pool.query(sql, values, (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error to update form: ' + err.message);
     }
     res.send('UPDATE_SUCCESS');
   });
 });
+
 
 
 
