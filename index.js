@@ -375,9 +375,9 @@ app.post('/updateWrongOrder', function (req, res) {
   pool.query(updateQuery, updateValues, function (error, results) {
     if (error) {
       console.error('Error updating form:', error);
-      return res.status(500).send('Error updating form');
+      return res.status(500).send('Error updating form: ', error);
     }
-    res.send('Form updated successfully');
+    res.send('UPDATE_SUCCESS');
   });
 });
 
