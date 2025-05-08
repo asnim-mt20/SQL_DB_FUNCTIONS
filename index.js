@@ -359,10 +359,11 @@ app.post('/updateWrongOrder', function (req, res) {
     return res.status(400).send('Previous or current Order Number and Type are required');
   }
 
-  const { Previous_Order_Number, Order_Number, Type, ...updateFields } = data;
+  const updateFields = {};
+  if (data.Order_Number) updateFields.Order_Number = data.Order_Number;
 
-  if (!Order_Number) {
-    return res.status(400).send('New Order Number is required when correcting');
+  if (Object.keys(updateFields).length === 0) {
+    return res.status(400).send('No valid fields provided for update');
   }
 
   const updateQuery = `
@@ -375,11 +376,12 @@ app.post('/updateWrongOrder', function (req, res) {
   pool.query(updateQuery, updateValues, function (error, results) {
     if (error) {
       console.error('Error updating form:', error);
-      return res.status(500).send('Error updating form: ', error);
+      return res.status(500).send('Error updating form: ' + error.message);
     }
     res.send('UPDATE_SUCCESS');
   });
 });
+
 
 
 /** endpoint to update an order in Unified Forms table using Order Number only*/
