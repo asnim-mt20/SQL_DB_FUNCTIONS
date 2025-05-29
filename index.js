@@ -364,6 +364,7 @@ app.post('/updateWrongOrder', function (req, res) {
   const values = [Order_Number, Previous_Order_Number, Type];
 
   pool.query(sql, values, (err, result) => {
+    console.log(sql)
     if (err) {
       console.error(err);
       return res.status(500).send('Error to update form: ' + err.message);
@@ -1026,15 +1027,3 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-
-
-const newPromise = new Promise((res, reject) => {
-  document.getElementById("button1").addEventListener('click', () => {
-    res("resolved value")
-  })
-  document.getElementById("button2").addEventListener('click', () => {
-    rej("value rejected")
-  })
-})
-
-newPromise.then(res => console.log(res)).catch(err => { console.log(err) })
